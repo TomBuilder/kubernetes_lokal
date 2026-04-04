@@ -1,0 +1,43 @@
+﻿replicaCount: 1
+
+image:
+  repository: nginx
+  tag: "1.27"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: app-a.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+app:
+  database:
+    secretName: app-a-db
+    connectionStringKey: connectionString
+
+persistence:
+  enabled: true
+  storageClassName: ""
+  accessModes:
+    - ReadWriteOnce
+  size: 1Gi
+  mountPath: /usr/share/nginx/html/data
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

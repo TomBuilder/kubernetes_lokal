@@ -1,0 +1,11 @@
+﻿image:
+  repository: nginx
+  tag: "1.27"
+
+ingress:
+  enabled: false
+
+persistence:
+  enabled: true
+  storageClassName: standard
+  size: 1Gi

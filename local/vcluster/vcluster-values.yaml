@@ -1,0 +1,19 @@
+﻿sync:
+  toHost:
+    ingresses:
+      enabled: true
+    persistentVolumeClaims:
+      enabled: true
+    services:
+      enabled: true
+  fromHost:
+    nodes:
+      enabled: true
+
+controlPlane:
+  backingStore:
+    embedded:
+      enabled: true
+
+exportKubeConfig:
+  context: vcluster-app-a

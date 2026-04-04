@@ -1,0 +1,28 @@
+﻿# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
+
+# Kubernetes / local config
+kubeconfig*
+*.kubeconfig
+
+# Helm / values overrides with secrets
+values-override.yaml
+values-secrets.yaml
+
+# Logs and temp
+*.log
+*.tmp
