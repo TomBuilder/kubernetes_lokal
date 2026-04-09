@@ -20,3 +20,22 @@ kubectl get pods
 kubectl get svc
 kubectl get pvc
 helm list
+
+## Aufbau komplett:
+kind create cluster --config .\local\kind\cluster-config.yaml
+
+helm upgrade --install ingress-nginx ingress-nginx `
+  --repo https://kubernetes.github.io/ingress-nginx `
+  --namespace ingress-nginx `
+  --create-namespace `
+  -f .\local\ingress\ingress-nginx-values.yaml
+
+vcluster create app-a --namespace vcluster-app-a --connect=false -f .\local\vcluster\vcluster-values.yaml
+vcluster connect app-a --namespace vcluster-app-a
+helm upgrade --install app-a .\helm\app-a -f .\helm\app-a\values-local.yaml
+
+## Abbau:
+vcluster disconnect
+kind delete cluster --name host-cluster
+
+
