@@ -1,0 +1,26 @@
+vcluster disconnect
+
+  kubectl config use-context vcluster_app-a_vcluster-app-a_kind-host-cluster
+  helm uninstall app-a -n default
+
+  kubectl config use-context kind-host-cluster
+  vcluster delete app-a -n vcluster-app-a
+
+  helm uninstall ingress-nginx -n ingress-nginx
+  kind delete cluster --name host-cluster
+
+##################################
+
+  kind create cluster --config .\local\kind\cluster-config.yaml
+
+  helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingr
+  ess-nginx --create-namespace -f .\local\ingress\ingress-nginx-values.yaml
+
+  vcluster create app-a -n vcluster-app-a -f .\local\vcluster\vcluster-values.yaml
+  vcluster connect app-a -n vcluster-app-a
+
+  helm upgrade --install app-a .\helm\app-a -n default -f .\helm\app-a\values-local.yaml
+
+  kubectl get pods -A
+  kubectl get svc -A
+  kubectl get ingress -A
