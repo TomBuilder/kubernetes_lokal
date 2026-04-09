@@ -1,0 +1,22 @@
+## Anlegen der Container:
+kind create cluster --config .\local\kind\cluster-config.yaml
+
+kubectl cluster-info --context kind-host-cluster
+kubectl get nodes
+
+vcluster create app-a --namespace vcluster-app-a --connect=false -f .\local\vcluster\vcluster-values.yaml
+
+## Prüfen:
+kubectl get pods -n vcluster-app-a
+kubectl get svc -n vcluster-app-a
+
+## Verbinden:
+vcluster connect app-a --namespace vcluster-app-a
+
+## Helm deployen:
+helm upgrade --install app-a .\helm\app-a -f .\helm\app-a\values-local.yaml
+
+kubectl get pods
+kubectl get svc
+kubectl get pvc
+helm list

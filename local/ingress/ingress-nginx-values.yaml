@@ -1,0 +1,10 @@
+controller:
+  ingressClassResource:
+    name: nginx
+    enabled: true
+    default: true
+  service:
+    type: NodePort
+    nodePorts:
+      http: 30080
+      https: 30443
