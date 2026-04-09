@@ -10,10 +10,5 @@
     nodes:
       enabled: true
 
-controlPlane:
-  backingStore:
-    embedded:
-      enabled: true
-
 exportKubeConfig:
   context: vcluster-app-a
