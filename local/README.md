@@ -58,8 +58,8 @@ kubectl wait --namespace ingress-nginx `
 Der Background Worker wird lokal als Docker-Image gebaut und anschliessend in den `kind`-Cluster geladen.
 
 ```powershell
-docker build -t app-a-worker:1.0.0 -t app-a-worker:2.0.0 -f .\src\AppA.Worker\Dockerfile .
-kind load docker-image app-a-worker:1.0.0 app-a-worker:2.0.0 --name host-cluster
+docker build -t app-a-worker:1.1.0 -t app-a-worker:2.0.0 -f .\src\AppA.Worker\Dockerfile .
+kind load docker-image app-a-worker:1.1.0 app-a-worker:2.0.0 --name host-cluster
 ```
 
 ## 5. vCluster erstellen

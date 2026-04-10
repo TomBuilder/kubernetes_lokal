@@ -24,8 +24,8 @@ kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/late
 kubectl patch deployment metrics-server -n kube-system --context kind-host-cluster --type=json -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
 kubectl rollout status deployment/metrics-server -n kube-system --context kind-host-cluster --timeout=120s
 
-docker build -t app-a-worker:1.0.0 -t app-a-worker:2.0.0 -f .\src\AppA.Worker\Dockerfile .
-kind load docker-image app-a-worker:1.0.0 app-a-worker:2.0.0 --name host-cluster
+docker build -t app-a-worker:1.1.0 -t app-a-worker:2.0.0 -f .\src\AppA.Worker\Dockerfile .
+kind load docker-image app-a-worker:1.1.0 app-a-worker:2.0.0 --name host-cluster
 
 helm upgrade --install ingress-nginx ingress-nginx `
   --repo https://kubernetes.github.io/ingress-nginx `
@@ -89,7 +89,7 @@ http://tester2.app-a.local:8080/
 Zusätzlich sollten die Worker in den Logs unterschiedliche Versionen ausgeben:
 
 ```text
-tester1 -> version 1.0.0
+tester1 -> version 1.1.0
 tester2 -> version 2.0.0
 ```
 
