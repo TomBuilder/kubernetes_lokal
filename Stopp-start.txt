@@ -18,6 +18,10 @@ vcluster disconnect
   docker build -t app-a-worker:1.0.0 -t app-a-worker:2.0.0 -f .\src\AppA.Worker\Dockerfile .
   kind load docker-image app-a-worker:1.0.0 app-a-worker:2.0.0 --name host-cluster
 
+  kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml --context kind-host-cluster
+  kubectl patch deployment metrics-server -n kube-system --context kind-host-cluster --type=json -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+  kubectl rollout status deployment/metrics-server -n kube-system --context kind-host-cluster --timeout=120s
+
   helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace -f .\local\ingress\ingress-nginx-values.yaml
 
   vcluster create app-a -n vcluster-app-a -f .\local\vcluster\vcluster-values.yaml
@@ -30,3 +34,4 @@ vcluster disconnect
   kubectl get pods -A
   kubectl get svc -A
   kubectl get ingress -A
+  kubectl top nodes --context kind-host-cluster

@@ -14,6 +14,7 @@ Lokal wird ein Host-Cluster mit `kind` aufgebaut. Darin laeuft ein dauerhafter `
 - `vcluster`
 - `docker`
 - `.NET SDK`, wenn das Worker-Image lokal neu gebaut werden soll
+- Internetzugriff fuer `ingress-nginx` und `metrics-server`
 
 ## 1. Host-Cluster erstellen
 
@@ -21,7 +22,21 @@ Lokal wird ein Host-Cluster mit `kind` aufgebaut. Darin laeuft ein dauerhafter `
 kind create cluster --config .\local\kind\cluster-config.yaml
 ```
 
-## 2. Ingress Controller im Host-Cluster installieren
+## 2. Metrics Server im Host-Cluster installieren
+
+Fuer Host-Metriken in Lens und `kubectl top` wird im lokalen `kind`-Cluster ein `metrics-server` benoetigt.
+
+```powershell
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml --context kind-host-cluster
+kubectl patch deployment metrics-server -n kube-system --context kind-host-cluster `
+  --type=json `
+  -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+kubectl rollout status deployment/metrics-server -n kube-system --context kind-host-cluster --timeout=120s
+```
+
+Der Patch mit `--kubelet-insecure-tls` ist fuer den lokalen `kind`-Cluster noetig, damit `kubectl top` und Lens-Metriken funktionieren.
+
+## 3. Ingress Controller im Host-Cluster installieren
 
 Der lokale Ingress laeuft im Host-Cluster. Die Anwendung erzeugt ihren Ingress im `vCluster`, der dann in den Host-Cluster synchronisiert wird.
 
@@ -38,7 +53,7 @@ kubectl wait --namespace ingress-nginx `
   --timeout=120s
 ```
 
-## 3. Worker-Images lokal bauen und in kind laden
+## 4. Worker-Images lokal bauen und in kind laden
 
 Der Background Worker wird lokal als Docker-Image gebaut und anschliessend in den `kind`-Cluster geladen.
 
@@ -47,19 +62,19 @@ docker build -t app-a-worker:1.0.0 -t app-a-worker:2.0.0 -f .\src\AppA.Worker\Do
 kind load docker-image app-a-worker:1.0.0 app-a-worker:2.0.0 --name host-cluster
 ```
 
-## 4. vCluster erstellen
+## 5. vCluster erstellen
 
 ```powershell
 vcluster create app-a --namespace vcluster-app-a --connect=false -f .\local\vcluster\vcluster-values.yaml
 ```
 
-## 5. Mit dem vCluster verbinden
+## 6. Mit dem vCluster verbinden
 
 ```powershell
 vcluster connect app-a --namespace vcluster-app-a
 ```
 
-## 6. Testeranwendungen deployen
+## 7. Testeranwendungen deployen
 
 ```powershell
 helm upgrade --install tester1 .\helm\app-a `
@@ -77,7 +92,7 @@ helm upgrade --install tester2 .\helm\app-a `
   --kube-context vcluster_app-a_vcluster-app-a_kind-host-cluster
 ```
 
-## 6. Zugriff testen
+## 8. Zugriff testen
 
 Die Tester-Instanzen verwenden lokal eigene Hostnamen.
 
@@ -102,13 +117,20 @@ kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/te
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester2-app-a-worker -n default --tail=10
 ```
 
+Host-Metriken pruefen:
+
+```powershell
+kubectl top nodes --context kind-host-cluster
+kubectl top pods -n vcluster-app-a --context kind-host-cluster
+```
+
 Zum Debuggen ist es oft hilfreich, den synchronisierten Ingress im Host-Cluster explizit anzusehen:
 
 ```powershell
 kubectl --context kind-host-cluster get ingress -A
 ```
 
-## 7. Weitere Tester im selben vCluster anlegen
+## 9. Weitere Tester im selben vCluster anlegen
 
 Jeder weitere Tester bekommt ein eigenes Helm-Release und einen eigenen Hostnamen. Die Trennung erfolgt ueber den Release-Namen und nicht ueber einen weiteren `vCluster`.
 

@@ -7,17 +7,22 @@ Dieses Runbook beschreibt den ersten lokalen Aufbau fuer das Lernen von Kubernet
 ## Schritte
 
 1. Host-Cluster mit `kind` erstellen.
-2. Worker-Images lokal bauen und in `kind` laden.
-3. `ingress-nginx` im Host-Cluster installieren.
-4. `vCluster` fuer Anwendung A anlegen.
-5. In den vCluster verbinden.
-6. Testeranwendungen deployen.
-7. Pods, Service, PVC, Ingress und Worker-Logs pruefen.
+2. `metrics-server` im Host-Cluster installieren.
+3. Worker-Images lokal bauen und in `kind` laden.
+4. `ingress-nginx` im Host-Cluster installieren.
+5. `vCluster` fuer Anwendung A anlegen.
+6. In den vCluster verbinden.
+7. Testeranwendungen deployen.
+8. Pods, Service, PVC, Ingress, Worker-Logs und Host-Metriken pruefen.
 
 ## Befehle
 
 ```powershell
 kind create cluster --config .\local\kind\cluster-config.yaml
+
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml --context kind-host-cluster
+kubectl patch deployment metrics-server -n kube-system --context kind-host-cluster --type=json -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+kubectl rollout status deployment/metrics-server -n kube-system --context kind-host-cluster --timeout=120s
 
 docker build -t app-a-worker:1.0.0 -t app-a-worker:2.0.0 -f .\src\AppA.Worker\Dockerfile .
 kind load docker-image app-a-worker:1.0.0 app-a-worker:2.0.0 --name host-cluster
@@ -47,6 +52,8 @@ kubectl get pvc -A
 kubectl get svc -A
 helm list -A
 kubectl --context kind-host-cluster get ingress -A
+kubectl top nodes --context kind-host-cluster
+kubectl top pods -n vcluster-app-a --context kind-host-cluster
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester1-app-a-worker -n default --tail=10
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester2-app-a-worker -n default --tail=10
 ```
@@ -54,12 +61,14 @@ kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/te
 ## Erwartetes Ergebnis
 
 - Ein laufender Host-Cluster
+- Ein laufender `metrics-server` im Host-Cluster
 - Ein laufender `ingress-nginx` Controller im Host-Cluster
 - Ein laufender `vCluster`
 - Zwei deployte Testerinstanzen im `vCluster`
 - Zwei laufende Worker-Deployments im `vCluster`
 - Je Tester ein gebundener PVC
 - Je Tester ein aus dem `vCluster` in den Host-Cluster synchronisierter Ingress
+- Host-Metriken in Lens und per `kubectl top`
 
 ## Zugriffstest
 
