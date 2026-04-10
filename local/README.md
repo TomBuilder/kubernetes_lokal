@@ -13,14 +13,20 @@ Lokal wird ein Host-Cluster mit `kind` aufgebaut. Darin laeuft ein dauerhafter `
 - `helm`
 - `vcluster`
 - `docker`
-- `.NET SDK`, wenn das Worker-Image lokal neu gebaut werden soll
 - Internetzugriff fuer `ingress-nginx` und `metrics-server`
+- Zugriff auf das bereits lokal vorhandene Image `conregipsentw.azurecr.io/zvd-priorisierung:2.0.0.25447`
+- lokaler Pfad `D:\Testumgebung\ZVD` fuer Laufzeitdateien und Logs
 
 ## 1. Host-Cluster erstellen
 
 ```powershell
 kind create cluster --config .\local\kind\cluster-config.yaml
 ```
+
+Wichtig:
+
+- `local/kind/cluster-config.yaml` bindet `D:\Testumgebung\ZVD` per `extraMounts` in den `kind`-Node ein.
+- Aenderungen an diesem Mapping greifen erst nach einem Neuaufbau des `kind`-Clusters.
 
 ## 2. Metrics Server im Host-Cluster installieren
 
@@ -53,13 +59,12 @@ kubectl wait --namespace ingress-nginx `
   --timeout=120s
 ```
 
-## 4. Worker-Images lokal bauen und in kind laden
+## 4. Echten Worker in kind laden
 
-Der Background Worker wird lokal als Docker-Image gebaut und anschliessend in den `kind`-Cluster geladen.
+Der echte Worker ist lokal bereits als Docker-Image vorhanden und wird in den `kind`-Cluster geladen.
 
 ```powershell
-docker build -t app-a-worker:1.1.0 -t app-a-worker:2.0.0 -f .\src\AppA.Worker\Dockerfile .
-kind load docker-image app-a-worker:1.1.0 app-a-worker:2.0.0 --name host-cluster
+kind load docker-image conregipsentw.azurecr.io/zvd-priorisierung:2.0.0.25447 --name host-cluster
 ```
 
 ## 5. vCluster erstellen
@@ -77,6 +82,11 @@ vcluster connect app-a --namespace vcluster-app-a
 ## 7. Testeranwendungen deployen
 
 ```powershell
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster create secret generic app-a-worker-db `
+  --from-literal=imageCenterRepository='Host=host.docker.internal;Port=5433;Database=ZVD;Username=postgres;Password=IP79199pb;' `
+  --from-literal=imageCenterSettingsContext='Host=host.docker.internal;Port=5433;Database=ZVD;Username=postgres;Password=IP79199pb;' `
+  -n default
+
 helm upgrade --install tester1 .\helm\app-a `
   -n default `
   -f .\helm\app-a\values-local.yaml `
@@ -130,9 +140,23 @@ Zum Debuggen ist es oft hilfreich, den synchronisierten Ingress im Host-Cluster 
 kubectl --context kind-host-cluster get ingress -A
 ```
 
+Den Worker-spezifischen Zustand pruefst du zusaetzlich so:
+
+```powershell
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get secret app-a-worker-db -n default
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester1-app-a-worker -n default --tail=50
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester2-app-a-worker -n default --tail=50
+```
+
 ## 9. Weitere Tester im selben vCluster anlegen
 
 Jeder weitere Tester bekommt ein eigenes Helm-Release und einen eigenen Hostnamen. Die Trennung erfolgt ueber den Release-Namen und nicht ueber einen weiteren `vCluster`.
+
+Fuer den echten Worker kommen lokal zusaetzlich dazu:
+
+- eigener Unterordner unter `D:\Testumgebung\ZVD`
+- eigener `ServiceConfiguration__InstallationEnvironment`-Wert
+- eigene `worker.extraEnv`-Werte bei Bedarf
 
 Beispiel:
 
@@ -157,14 +181,15 @@ Pruefen:
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get pods
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get svc
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get ingress
-kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get pvc
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get secret app-a-worker-db -n default
 helm list -n default --kube-context vcluster_app-a_vcluster-app-a_kind-host-cluster
 ```
 
 ## Hinweise
 
-- Der lokale Betrieb verwendet Dummy-Werte fuer Datenbank und Storage.
+- Der lokale Betrieb verwendet reale Worker-Konfiguration mit einem Kubernetes-Secret fuer die DB-Connection-Strings.
 - ACR, Key Vault und Azure Files werden erst in den naechsten Phasen angebunden.
 - Das Chart ist absichtlich minimal gehalten, damit die Grundprinzipien klar bleiben.
 - Die Port-Mappings `8080` und `8443` aus `kind` werden auf die NodePorts `30080` und `30443` des Ingress Controllers geleitet.
 - Beispiel-Overlays fuer weitere Tester liegen in `local/sample-values/`.
+- Der Worker nutzt lokal `hostPath` fuer `/configdata`; der Web-Teil verwendet weiterhin PVC.
