@@ -13,8 +13,7 @@ vcluster disconnect
 
   kind create cluster --config .\local\kind\cluster-config.yaml
 
-  helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingr
-  ess-nginx --create-namespace -f .\local\ingress\ingress-nginx-values.yaml
+  helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace -f .\local\ingress\ingress-nginx-values.yaml
 
   vcluster create app-a -n vcluster-app-a -f .\local\vcluster\vcluster-values.yaml
   vcluster connect app-a -n vcluster-app-a
