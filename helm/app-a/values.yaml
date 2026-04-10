@@ -22,6 +22,8 @@ ingress:
   tls: []
 
 app:
+  displayName: "Anwendung A"
+  message: "Standardinstanz im gemeinsamen vCluster"
   database:
     secretName: app-a-db
     connectionStringKey: connectionString

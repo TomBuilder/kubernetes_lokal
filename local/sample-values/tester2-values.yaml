@@ -1,0 +1,6 @@
+ingress:
+  hosts:
+    - host: tester2.app-a.local
+      paths:
+        - path: /
+          pathType: Prefix

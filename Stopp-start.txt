@@ -1,6 +1,8 @@
 vcluster disconnect
 
   kubectl config use-context vcluster_app-a_vcluster-app-a_kind-host-cluster
+  helm uninstall tester2 -n default
+  helm uninstall tester1 -n default
   helm uninstall app-a -n default
 
   kubectl config use-context kind-host-cluster
@@ -18,7 +20,9 @@ vcluster disconnect
   vcluster create app-a -n vcluster-app-a -f .\local\vcluster\vcluster-values.yaml
   vcluster connect app-a -n vcluster-app-a
 
-  helm upgrade --install app-a .\helm\app-a -n default -f .\helm\app-a\values-local.yaml
+  helm upgrade --install tester1 .\helm\app-a -n default -f .\helm\app-a\values-local.yaml -f .\local\sample-values\tester1-values.yaml -f .\local\sample-values\tester1-branding.yaml --kube-context vcluster_app-a_vcluster-app-a_kind-host-cluster
+
+  helm upgrade --install tester2 .\helm\app-a -n default -f .\helm\app-a\values-local.yaml -f .\local\sample-values\tester2-values.yaml -f .\local\sample-values\tester2-branding.yaml --kube-context vcluster_app-a_vcluster-app-a_kind-host-cluster
 
   kubectl get pods -A
   kubectl get svc -A

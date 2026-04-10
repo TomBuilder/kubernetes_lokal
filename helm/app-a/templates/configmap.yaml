@@ -1,0 +1,90 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "app-a.fullname" . }}-content
+  labels:
+    {{- include "app-a.labels" . | nindent 4 }}
+data:
+  index.html: |
+    <!doctype html>
+    <html lang="de">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{{ .Values.app.displayName }}</title>
+        <style>
+          :root {
+            color-scheme: light;
+            font-family: "Segoe UI", Arial, sans-serif;
+          }
+          body {
+            margin: 0;
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg, #f3f6fb 0%, #dfe9f3 100%);
+            color: #16202a;
+          }
+          main {
+            width: min(720px, calc(100vw - 3rem));
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(22, 32, 42, 0.08);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 20px 60px rgba(33, 56, 82, 0.14);
+          }
+          .eyebrow {
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #50667d;
+            margin-bottom: 0.75rem;
+          }
+          h1 {
+            margin: 0 0 0.75rem;
+            font-size: clamp(2rem, 4vw, 3rem);
+            line-height: 1.05;
+          }
+          p {
+            margin: 0 0 1.25rem;
+            font-size: 1.05rem;
+            line-height: 1.6;
+          }
+          dl {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 0.75rem 1rem;
+            margin: 1.5rem 0 0;
+          }
+          dt {
+            font-weight: 700;
+          }
+          dd {
+            margin: 0;
+            overflow-wrap: anywhere;
+          }
+          code {
+            font-family: Consolas, "Courier New", monospace;
+            background: #eef3f8;
+            padding: 0.15rem 0.4rem;
+            border-radius: 0.35rem;
+          }
+        </style>
+      </head>
+      <body>
+        <main>
+          <div class="eyebrow">vCluster Demo</div>
+          <h1>{{ .Values.app.displayName }}</h1>
+          <p>{{ .Values.app.message }}</p>
+          <dl>
+            <dt>Release</dt>
+            <dd><code>{{ .Release.Name }}</code></dd>
+            <dt>Namespace</dt>
+            <dd><code>{{ .Release.Namespace }}</code></dd>
+            <dt>Host</dt>
+            <dd><code>{{ (index .Values.ingress.hosts 0).host }}</code></dd>
+          </dl>
+        </main>
+      </body>
+    </html>

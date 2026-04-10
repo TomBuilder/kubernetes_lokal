@@ -48,26 +48,40 @@ vcluster create app-a --namespace vcluster-app-a --connect=false -f .\local\vclu
 vcluster connect app-a --namespace vcluster-app-a
 ```
 
-## 5. Beispielanwendung deployen
+## 5. Testeranwendungen deployen
 
 ```powershell
-helm upgrade --install app-a .\helm\app-a -f .\helm\app-a\values-local.yaml
+helm upgrade --install tester1 .\helm\app-a `
+  -n default `
+  -f .\helm\app-a\values-local.yaml `
+  -f .\local\sample-values\tester1-values.yaml `
+  -f .\local\sample-values\tester1-branding.yaml `
+  --kube-context vcluster_app-a_vcluster-app-a_kind-host-cluster
+
+helm upgrade --install tester2 .\helm\app-a `
+  -n default `
+  -f .\helm\app-a\values-local.yaml `
+  -f .\local\sample-values\tester2-values.yaml `
+  -f .\local\sample-values\tester2-branding.yaml `
+  --kube-context vcluster_app-a_vcluster-app-a_kind-host-cluster
 ```
 
 ## 6. Zugriff testen
 
-Das Chart aktiviert lokal einen Ingress mit dem Hostnamen `app-a.local`.
+Die Tester-Instanzen verwenden lokal eigene Hostnamen.
 
-Trage dafuer einmalig einen Host-Eintrag ein:
+Trage dafuer einmalig Host-Eintraege ein:
 
 ```text
-127.0.0.1 app-a.local
+127.0.0.1 tester1.app-a.local
+127.0.0.1 tester2.app-a.local
 ```
 
-Danach sollte die Anwendung ueber den Ingress erreichbar sein:
+Danach sollten die Anwendungen ueber den Ingress erreichbar sein:
 
 ```text
-http://app-a.local:8080/
+http://tester1.app-a.local:8080/
+http://tester2.app-a.local:8080/
 ```
 
 Zum Debuggen ist es oft hilfreich, den synchronisierten Ingress im Host-Cluster explizit anzusehen:
@@ -76,9 +90,41 @@ Zum Debuggen ist es oft hilfreich, den synchronisierten Ingress im Host-Cluster 
 kubectl --context kind-host-cluster get ingress -A
 ```
 
+## 7. Weitere Tester im selben vCluster anlegen
+
+Jeder weitere Tester bekommt ein eigenes Helm-Release und einen eigenen Hostnamen. Die Trennung erfolgt ueber den Release-Namen und nicht ueber einen weiteren `vCluster`.
+
+Beispiel:
+
+```powershell
+helm upgrade --install tester1 .\helm\app-a `
+  -n default `
+  -f .\helm\app-a\values-local.yaml `
+  -f .\local\sample-values\tester1-values.yaml `
+  -f .\local\sample-values\tester1-branding.yaml `
+  --kube-context vcluster_app-a_vcluster-app-a_kind-host-cluster
+```
+
+Fuer den lokalen Browserzugriff ist zusaetzlich ein Host-Eintrag noetig:
+
+```text
+127.0.0.1 tester1.app-a.local
+```
+
+Pruefen:
+
+```powershell
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get pods
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get svc
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get ingress
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get pvc
+helm list -n default --kube-context vcluster_app-a_vcluster-app-a_kind-host-cluster
+```
+
 ## Hinweise
 
 - Der lokale Betrieb verwendet Dummy-Werte fuer Datenbank und Storage.
 - ACR, Key Vault und Azure Files werden erst in den naechsten Phasen angebunden.
 - Das Chart ist absichtlich minimal gehalten, damit die Grundprinzipien klar bleiben.
 - Die Port-Mappings `8080` und `8443` aus `kind` werden auf die NodePorts `30080` und `30443` des Ingress Controllers geleitet.
+- Beispiel-Overlays fuer weitere Tester liegen in `local/sample-values/`.

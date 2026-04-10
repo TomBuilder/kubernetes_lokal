@@ -1,0 +1,3 @@
+app:
+  displayName: "Anwendung A"
+  message: "Basisinstanz im gemeinsamen vCluster"

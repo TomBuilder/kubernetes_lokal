@@ -36,11 +36,17 @@ spec:
               containerPort: 80
               protocol: TCP
           volumeMounts:
+            - name: app-content
+              mountPath: /usr/share/nginx/html/index.html
+              subPath: index.html
             - name: app-data
               mountPath: {{ .Values.persistence.mountPath }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
+        - name: app-content
+          configMap:
+            name: {{ include "app-a.fullname" . }}-content
         - name: app-data
           persistentVolumeClaim:
             claimName: {{ include "app-a.fullname" . }}
