@@ -12,6 +12,8 @@ Lokal wird ein Host-Cluster mit `kind` aufgebaut. Darin laeuft ein dauerhafter `
 - `kubectl`
 - `helm`
 - `vcluster`
+- `docker`
+- `.NET SDK`, wenn das Worker-Image lokal neu gebaut werden soll
 
 ## 1. Host-Cluster erstellen
 
@@ -36,19 +38,28 @@ kubectl wait --namespace ingress-nginx `
   --timeout=120s
 ```
 
-## 3. vCluster erstellen
+## 3. Worker-Images lokal bauen und in kind laden
+
+Der Background Worker wird lokal als Docker-Image gebaut und anschliessend in den `kind`-Cluster geladen.
+
+```powershell
+docker build -t app-a-worker:1.0.0 -t app-a-worker:2.0.0 -f .\src\AppA.Worker\Dockerfile .
+kind load docker-image app-a-worker:1.0.0 app-a-worker:2.0.0 --name host-cluster
+```
+
+## 4. vCluster erstellen
 
 ```powershell
 vcluster create app-a --namespace vcluster-app-a --connect=false -f .\local\vcluster\vcluster-values.yaml
 ```
 
-## 4. Mit dem vCluster verbinden
+## 5. Mit dem vCluster verbinden
 
 ```powershell
 vcluster connect app-a --namespace vcluster-app-a
 ```
 
-## 5. Testeranwendungen deployen
+## 6. Testeranwendungen deployen
 
 ```powershell
 helm upgrade --install tester1 .\helm\app-a `
@@ -82,6 +93,13 @@ Danach sollten die Anwendungen ueber den Ingress erreichbar sein:
 ```text
 http://tester1.app-a.local:8080/
 http://tester2.app-a.local:8080/
+```
+
+Die Worker-Version ist auf der Seite sichtbar. Die Worker-Logs selbst kannst du so pruefen:
+
+```powershell
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester1-app-a-worker -n default --tail=10
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester2-app-a-worker -n default --tail=10
 ```
 
 Zum Debuggen ist es oft hilfreich, den synchronisierten Ingress im Host-Cluster explizit anzusehen:

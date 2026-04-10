@@ -1,3 +1,8 @@
 app:
   displayName: "Tester 1"
   message: "Eigene Testinstanz fuer Tester 1"
+
+worker:
+  image:
+    tag: "1.1.0"
+  version: "1.1.0"

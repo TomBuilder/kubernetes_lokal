@@ -7,16 +7,20 @@ Dieses Runbook beschreibt den ersten lokalen Aufbau fuer das Lernen von Kubernet
 ## Schritte
 
 1. Host-Cluster mit `kind` erstellen.
-2. `ingress-nginx` im Host-Cluster installieren.
-3. `vCluster` fuer Anwendung A anlegen.
-4. In den vCluster verbinden.
-5. Testeranwendungen deployen.
-6. Pods, Service, PVC und Ingress pruefen.
+2. Worker-Images lokal bauen und in `kind` laden.
+3. `ingress-nginx` im Host-Cluster installieren.
+4. `vCluster` fuer Anwendung A anlegen.
+5. In den vCluster verbinden.
+6. Testeranwendungen deployen.
+7. Pods, Service, PVC, Ingress und Worker-Logs pruefen.
 
 ## Befehle
 
 ```powershell
 kind create cluster --config .\local\kind\cluster-config.yaml
+
+docker build -t app-a-worker:1.0.0 -t app-a-worker:2.0.0 -f .\src\AppA.Worker\Dockerfile .
+kind load docker-image app-a-worker:1.0.0 app-a-worker:2.0.0 --name host-cluster
 
 helm upgrade --install ingress-nginx ingress-nginx `
   --repo https://kubernetes.github.io/ingress-nginx `
@@ -43,6 +47,8 @@ kubectl get pvc -A
 kubectl get svc -A
 helm list -A
 kubectl --context kind-host-cluster get ingress -A
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester1-app-a-worker -n default --tail=10
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester2-app-a-worker -n default --tail=10
 ```
 
 ## Erwartetes Ergebnis
@@ -51,6 +57,7 @@ kubectl --context kind-host-cluster get ingress -A
 - Ein laufender `ingress-nginx` Controller im Host-Cluster
 - Ein laufender `vCluster`
 - Zwei deployte Testerinstanzen im `vCluster`
+- Zwei laufende Worker-Deployments im `vCluster`
 - Je Tester ein gebundener PVC
 - Je Tester ein aus dem `vCluster` in den Host-Cluster synchronisierter Ingress
 
@@ -68,6 +75,13 @@ Danach sind die Aufrufe ueber den vom `kind`-Cluster gemappten HTTP-Port moeglic
 ```text
 http://tester1.app-a.local:8080/
 http://tester2.app-a.local:8080/
+```
+
+Zusätzlich sollten die Worker in den Logs unterschiedliche Versionen ausgeben:
+
+```text
+tester1 -> version 1.0.0
+tester2 -> version 2.0.0
 ```
 
 ## Mehrere Tester im selben vCluster

@@ -10,6 +10,10 @@
 {{- end -}}
 {{- end -}}
 
+{{- define "app-a.workerFullname" -}}
+{{- printf "%s-worker" (include "app-a.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
 {{- define "app-a.labels" -}}
 app.kubernetes.io/name: {{ include "app-a.name" . }}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}

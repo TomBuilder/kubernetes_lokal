@@ -84,6 +84,8 @@ data:
             <dd><code>{{ .Release.Namespace }}</code></dd>
             <dt>Host</dt>
             <dd><code>{{ (index .Values.ingress.hosts 0).host }}</code></dd>
+            <dt>Worker-Version</dt>
+            <dd><code>{{ .Values.worker.version }}</code></dd>
           </dl>
         </main>
       </body>

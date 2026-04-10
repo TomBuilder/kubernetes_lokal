@@ -38,6 +38,16 @@ persistence:
 
 resources: {}
 
+worker:
+  enabled: true
+  image:
+    repository: app-a-worker
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  version: "0.1.0"
+  intervalSeconds: 5
+  resources: {}
+
 nodeSelector: {}
 
 tolerations: []

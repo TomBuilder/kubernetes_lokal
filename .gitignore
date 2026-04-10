@@ -26,3 +26,7 @@ values-secrets.yaml
 # Logs and temp
 *.log
 *.tmp
+
+# .NET
+**/bin/
+**/obj/

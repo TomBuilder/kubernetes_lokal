@@ -15,6 +15,9 @@ vcluster disconnect
 
   kind create cluster --config .\local\kind\cluster-config.yaml
 
+  docker build -t app-a-worker:1.0.0 -t app-a-worker:2.0.0 -f .\src\AppA.Worker\Dockerfile .
+  kind load docker-image app-a-worker:1.0.0 app-a-worker:2.0.0 --name host-cluster
+
   helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace ingress-nginx --create-namespace -f .\local\ingress\ingress-nginx-values.yaml
 
   vcluster create app-a -n vcluster-app-a -f .\local\vcluster\vcluster-values.yaml
