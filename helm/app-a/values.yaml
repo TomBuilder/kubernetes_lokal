@@ -44,8 +44,16 @@ worker:
     repository: app-a-worker
     tag: "0.1.0"
     pullPolicy: IfNotPresent
+    pullSecrets: []
   version: "0.1.0"
   intervalSeconds: 5
+  extraEnv: {}
+  secretEnv: []
+  mountRootVolume: false
+  mountRootPath: /mounts/root
+  mountVolumeSource: pvc
+  hostPath: ""
+  hostPathType: DirectoryOrCreate
   resources: {}
 
 nodeSelector: {}

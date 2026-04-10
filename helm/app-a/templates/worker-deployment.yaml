@@ -20,6 +20,16 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
         app.kubernetes.io/component: worker
     spec:
+      {{- $workerPullSecrets := .Values.worker.image.pullSecrets | default (list) }}
+      {{- $globalPullSecrets := .Values.image.pullSecrets | default (list) }}
+      {{- $pullSecrets := $workerPullSecrets }}
+      {{- if eq (len $pullSecrets) 0 }}
+      {{- $pullSecrets = $globalPullSecrets }}
+      {{- end }}
+      {{- with $pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
       containers:
         - name: worker
           image: "{{ .Values.worker.image.repository }}:{{ .Values.worker.image.tag }}"
@@ -31,6 +41,35 @@ spec:
               value: {{ .Values.worker.version | quote }}
             - name: Worker__IntervalSeconds
               value: {{ .Values.worker.intervalSeconds | quote }}
+            {{- range $name, $value := .Values.worker.extraEnv }}
+            - name: {{ $name | quote }}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- range .Values.worker.secretEnv }}
+            - name: {{ .name | quote }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .secretName | quote }}
+                  key: {{ .secretKey | quote }}
+                  optional: {{ default false .optional }}
+            {{- end }}
+          {{- if .Values.worker.mountRootVolume }}
+          volumeMounts:
+            - name: app-data
+              mountPath: {{ .Values.worker.mountRootPath | quote }}
+          {{- end }}
           resources:
             {{- toYaml .Values.worker.resources | nindent 12 }}
+      {{- if .Values.worker.mountRootVolume }}
+      volumes:
+        - name: app-data
+          {{- if eq .Values.worker.mountVolumeSource "hostPath" }}
+          hostPath:
+            path: {{ .Values.worker.hostPath | quote }}
+            type: {{ .Values.worker.hostPathType | quote }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "app-a.fullname" . }}
+          {{- end }}
+      {{- end }}
 {{- end }}

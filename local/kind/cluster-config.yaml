@@ -4,6 +4,9 @@ name: host-cluster
 nodes:
   - role: control-plane
     image: kindest/node:v1.30.0
+    extraMounts:
+      - hostPath: D:\Testumgebung\ZVD
+        containerPath: /var/local/app-a-runtime/zvd
     extraPortMappings:
       - containerPort: 30080
         hostPort: 8080

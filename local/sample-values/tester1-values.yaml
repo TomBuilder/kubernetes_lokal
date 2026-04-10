@@ -4,3 +4,43 @@ ingress:
       paths:
         - path: /
           pathType: Prefix
+
+worker:
+  image:
+    repository: conregipsentw.azurecr.io/zvd-priorisierung
+    tag: "2.0.0.25447"
+  version: "2.0.0.25447"
+  mountRootVolume: true
+  mountRootPath: /configdata
+  mountVolumeSource: hostPath
+  hostPath: /var/local/app-a-runtime/zvd/tester1
+  extraEnv:
+    ServiceConfiguration__InstallationEnvironment: tester1
+    Serilog__Using__0: Serilog.Sinks.Console
+    Serilog__Using__1: Serilog.Sinks.File
+    Serilog__MinimumLevel__Default: Information
+    Serilog__MinimumLevel__Override__Microsoft: Warning
+    Serilog__MinimumLevel__Override__System: Warning
+    Serilog__MinimumLevel__Override__Geva.Ipsydion.Services.ServiceBase: Verbose
+    Serilog__MinimumLevel__Override__Geva.Ipsydion.Services.ZvdPriorisierung.Worker: Verbose
+    Serilog__WriteTo__0__Name: Console
+    Serilog__WriteTo__1__Name: File
+    Serilog__WriteTo__1__Args__fileSizeLimitBytes: "10000000"
+    Serilog__WriteTo__1__Args__outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff} {Level:u3}] {SourceContext} {Message} {NewLine}{Exception}"
+    Serilog__WriteTo__1__Args__path: /configdata/logs/geva_zv1_priorisierung/geva_zv1_priorisierung_.log
+    Serilog__WriteTo__1__Args__restrictedToMinimumLevel: Verbose
+    Serilog__WriteTo__1__Args__retainedFileCountLimit: "5"
+    Serilog__WriteTo__1__Args__rollOnFileSizeLimit: "true"
+    Serilog__WriteTo__1__Args__rollingInterval: Day
+    Serilog__WriteTo__1__Args__shared: "true"
+    Connections__0__Name: ImageCenterRepository
+    Connections__0__ProviderName: Npgsql
+    Connections__1__Name: ImageCenterSettingsContext
+    Connections__1__ProviderName: Npgsql
+  secretEnv:
+    - name: Connections__0__ConnectionString
+      secretName: app-a-worker-db
+      secretKey: imageCenterRepository
+    - name: Connections__1__ConnectionString
+      secretName: app-a-worker-db
+      secretKey: imageCenterSettingsContext

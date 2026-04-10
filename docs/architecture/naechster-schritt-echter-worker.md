@@ -157,6 +157,33 @@ Vor der Umsetzung des ersten echten Workers sind noch diese Punkte fachlich zu k
 - Welche minimale Konfiguration wird per Env Var/Secret geliefert?
 - Welche Konfiguration muss spaeter zwingend als Datei vorliegen?
 
+## Festgelegt fuer den lokalen Pilot
+
+Fuer den naechsten lokalen Ausbau ist als erstes echtes Worker-Image vorgesehen:
+
+- `conregipsentw.azurecr.io/zvd-priorisierung:2.0.0.25447`
+
+Dieser Stand ersetzt im lokalen Setup den Demo-Worker als technische Pilotbasis fuer Phase 1.
+
+Der vorhandene lokale Startpunkt fuer dieses Image ist:
+
+- `D:\Projekte\ipsYdion\IpsydionGeva\Services\ZvdPriorisierung\docker_build.env`
+
+Daraus ergeben sich fuer das Kubernetes-Setup mindestens diese Anforderungen:
+
+- .NET-Konfiguration ueber Env Vars mit `__` statt `:`
+- zwei Connection-String-Eintraege fuer PostgreSQL
+- `ServiceConfiguration__InstallationEnvironment=Services`
+- Serilog auf Konsole und Datei
+- beschreibbarer Mount fuer die Laufzeitdaten, lokal derzeit unter `/configdata`
+- fuer `kind` wird der Windows-Pfad `D:\Testumgebung\ZVD` zusaetzlich per `extraMounts` in den Node eingebunden und im Worker lokal per `hostPath` verwendet
+
+Offen bleibt weiterhin:
+
+- welcher fachliche Worker-Typ innerhalb von `zvd-priorisierung` damit genau pilotiert wird
+- welche minimale DB-Konfiguration dieser Worker konkret benoetigt
+- ob fuer `tester1` und `tester2` direkt unterschiedliche Tags genutzt werden sollen oder zunaechst derselbe Stand ausgerollt wird
+
 ## Empfehlung fuer die Wiederaufnahme
 
 Wenn die Arbeit in einem anderen Thread fortgesetzt wird, ist der naechste sinnvolle Einstieg:

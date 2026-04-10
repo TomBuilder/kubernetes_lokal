@@ -38,4 +38,5 @@ helm upgrade --install app-a .\helm\app-a -f .\helm\app-a\values-local.yaml
 vcluster disconnect
 kind delete cluster --name host-cluster
 
-
+## Image setzen
+kind load docker-image conregipsentw.azurecr.io/zvd-priorisierung:2.0.0.25447
