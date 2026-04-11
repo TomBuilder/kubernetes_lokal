@@ -40,6 +40,7 @@ resources: {}
 
 worker:
   enabled: true
+  replicaCount: 1
   image:
     repository: app-a-worker
     tag: "0.1.0"
@@ -54,6 +55,23 @@ worker:
   mountVolumeSource: pvc
   hostPath: ""
   hostPathType: DirectoryOrCreate
+  keda:
+    enabled: false
+    pollingInterval: 10
+    cooldownPeriod: 30
+    minReplicaCount: 0
+    maxReplicaCount: 10
+    idleReplicaCount: 0
+    host: host.docker.internal
+    port: "5432"
+    dbName: app
+    userName: postgres
+    secretName: app-a-worker-db
+    passwordSecretKey: postgresPassword
+    sslmode: disable
+    query: "SELECT 0"
+    targetQueryValue: "1"
+    activationTargetQueryValue: "0"
   resources: {}
 
 nodeSelector: {}

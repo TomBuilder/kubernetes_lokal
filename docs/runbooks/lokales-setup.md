@@ -44,6 +44,7 @@ vcluster connect app-a --namespace vcluster-app-a
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster create secret generic app-a-worker-db `
   --from-literal=imageCenterRepository='Host=host.docker.internal;Port=5433;Database=ZVD;Username=postgres;Password=IP79199pb;' `
   --from-literal=imageCenterSettingsContext='Host=host.docker.internal;Port=5433;Database=ZVD;Username=postgres;Password=IP79199pb;' `
+  --from-literal=postgresPassword='IP79199pb;' `
   -n default
 
 helm upgrade --install tester1 .\helm\app-a `
@@ -82,6 +83,50 @@ kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get secret app
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester1-app-a-worker -n default --tail=50
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester2-app-a-worker -n default --tail=50
 ```
+
+## KEDA lokal ausprobieren
+
+Voraussetzung:
+
+- KEDA ist im Cluster installiert.
+- Die SQL-Abfrage in `local/sample-values/tester1-values.yaml` oder `local/sample-values/tester2-values.yaml` passt zur realen Tabelle.
+
+Der aktuelle lokale Trigger basiert auf PostgreSQL und zaehlt Eintraege in `REPO.TASKS` mit:
+
+- `WORKFLOWID = 'ZAHLVERD'`
+- `WORKFLOWSTATE = 99`
+- `WORKFLOWQUEUE = 'Ready'`
+- `ISDELETED = 0`
+- `INDEX2 = '0800'` fuer `tester1`
+- `INDEX2 = '0801'` fuer `tester2`
+- die Verbindung wird fuer KEDA explizit ueber `host`, `port`, `dbName`, `userName` und eine `TriggerAuthentication` aus Secret aufgebaut
+- lokal wird `sslmode = disable` verwendet
+
+Fuer den ersten lokalen Test ist `maxReplicaCount` bewusst auf `1` gesetzt, damit nur zwischen `0` und `1` Worker skaliert wird.
+
+Zum Aktivieren fuer `tester1`:
+
+```powershell
+helm upgrade --install tester1 .\helm\app-a `
+  -n default `
+  -f .\helm\app-a\values-local.yaml `
+  -f .\local\sample-values\tester1-values.yaml `
+  -f .\local\sample-values\tester1-branding.yaml `
+  --set worker.keda.enabled=true `
+  --set worker.replicaCount=0 `
+  --kube-context vcluster_app-a_vcluster-app-a_kind-host-cluster
+```
+
+Pruefen:
+
+```powershell
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get scaledobject -n default
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster describe scaledobject tester1-app-a-worker -n default
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get deployment tester1-app-a-worker -n default
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get hpa -n default
+```
+
+Wenn die DB-Abfrage `0` liefert, darf der Worker auf `0` gehen. Sobald die Abfrage `>= 1` liefert, sollte KEDA den Worker wieder aktivieren.
 
 ## Erwartetes Ergebnis
 

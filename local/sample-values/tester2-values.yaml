@@ -6,6 +6,7 @@ ingress:
           pathType: Prefix
 
 worker:
+  replicaCount: 1
   image:
     repository: conregipsentw.azurecr.io/zvd-priorisierung
     tag: "2.0.0.25447"
@@ -44,3 +45,20 @@ worker:
     - name: Connections__1__ConnectionString
       secretName: app-a-worker-db
       secretKey: imageCenterSettingsContext
+  keda:
+    enabled: false
+    pollingInterval: 10
+    cooldownPeriod: 30
+    minReplicaCount: 0
+    maxReplicaCount: 1
+    idleReplicaCount: 0
+    host: host.docker.internal
+    port: "5433"
+    dbName: ZVD
+    userName: postgres
+    secretName: app-a-worker-db
+    passwordSecretKey: postgresPassword
+    sslmode: disable
+    query: "SELECT COUNT(*) FROM \"REPO\".\"TASKS\" WHERE \"WORKFLOWID\" = 'ZAHLVERD' AND \"WORKFLOWSTATE\" = 99 AND \"WORKFLOWQUEUE\" = 'Ready' AND \"INDEX2\" = '0801' AND \"ISDELETED\" = 0"
+    targetQueryValue: "1"
+    activationTargetQueryValue: "0"

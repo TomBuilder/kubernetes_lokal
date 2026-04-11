@@ -1,0 +1,14 @@
+{{- if and .Values.worker.enabled .Values.worker.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: {{ include "app-a.workerFullname" . }}
+  labels:
+    {{- include "app-a.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  secretTargetRef:
+    - parameter: password
+      name: {{ .Values.worker.keda.secretName | quote }}
+      key: {{ .Values.worker.keda.passwordSecretKey | quote }}
+{{- end }}

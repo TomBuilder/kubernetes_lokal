@@ -130,6 +130,10 @@ Warum erst spaeter:
 - zuerst muss der echte Worker fachlich sauber laufen
 - erst danach sollte Autoscaling als eigener Mechanismus hinzukommen
 
+Technisch bietet sich fuer das bestehende Helm-Chart ein `ScaledObject` je Worker-Deployment an.
+Der Trigger kann ueber dieselbe DB-Verbindung laufen, die auch der Worker selbst nutzt.
+Fuer den lokalen Pilot reicht dafuer zunaechst ein einziger PostgreSQL-Trigger je Tester und Worker-Typ.
+
 ## Architekturannahmen fuer den ersten echten Worker
 
 Der erste echte Worker-Prototyp sollte:

@@ -7,7 +7,7 @@ metadata:
     {{- include "app-a.labels" . | nindent 4 }}
     app.kubernetes.io/component: worker
 spec:
-  replicas: 1
+  replicas: {{ .Values.worker.replicaCount }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "app-a.name" . }}

@@ -1,0 +1,30 @@
+{{- if and .Values.worker.enabled .Values.worker.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "app-a.workerFullname" . }}
+  labels:
+    {{- include "app-a.labels" . | nindent 4 }}
+    app.kubernetes.io/component: worker
+spec:
+  scaleTargetRef:
+    name: {{ include "app-a.workerFullname" . }}
+  pollingInterval: {{ .Values.worker.keda.pollingInterval }}
+  cooldownPeriod: {{ .Values.worker.keda.cooldownPeriod }}
+  minReplicaCount: {{ .Values.worker.keda.minReplicaCount }}
+  maxReplicaCount: {{ .Values.worker.keda.maxReplicaCount }}
+  idleReplicaCount: {{ .Values.worker.keda.idleReplicaCount }}
+  triggers:
+    - type: postgresql
+      authenticationRef:
+        name: {{ include "app-a.workerFullname" . }}
+      metadata:
+        host: {{ .Values.worker.keda.host | quote }}
+        port: {{ .Values.worker.keda.port | quote }}
+        dbName: {{ .Values.worker.keda.dbName | quote }}
+        userName: {{ .Values.worker.keda.userName | quote }}
+        sslmode: {{ .Values.worker.keda.sslmode | quote }}
+        query: {{ .Values.worker.keda.query | quote }}
+        targetQueryValue: {{ .Values.worker.keda.targetQueryValue | quote }}
+        activationTargetQueryValue: {{ .Values.worker.keda.activationTargetQueryValue | quote }}
+{{- end }}

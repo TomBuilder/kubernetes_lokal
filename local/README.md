@@ -85,6 +85,7 @@ vcluster connect app-a --namespace vcluster-app-a
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster create secret generic app-a-worker-db `
   --from-literal=imageCenterRepository='Host=host.docker.internal;Port=5433;Database=ZVD;Username=postgres;Password=IP79199pb;' `
   --from-literal=imageCenterSettingsContext='Host=host.docker.internal;Port=5433;Database=ZVD;Username=postgres;Password=IP79199pb;' `
+  --from-literal=postgresPassword='IP79199pb;' `
   -n default
 
 helm upgrade --install tester1 .\helm\app-a `
@@ -146,6 +147,37 @@ Den Worker-spezifischen Zustand pruefst du zusaetzlich so:
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get secret app-a-worker-db -n default
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester1-app-a-worker -n default --tail=50
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester2-app-a-worker -n default --tail=50
+```
+
+## 8a. DB-getriggerte Skalierung mit KEDA vorbereiten
+
+Das Chart kann optional ein `ScaledObject` fuer den Worker erzeugen. Die lokale Beispielkonfiguration ist in den `tester*-values.yaml` bereits vorbereitet, aber standardmaessig deaktiviert.
+
+Die vorbereitete Beispielabfrage nutzt PostgreSQL auf `Connections__0__ConnectionString` und zaehlt Datensaetze aus `REPO.TASKS` fuer:
+
+- `WORKFLOWID = 'ZAHLVERD'`
+- `WORKFLOWSTATE = 99`
+- `WORKFLOWQUEUE = 'Ready'`
+- `ISDELETED = 0`
+- `INDEX2 = '0800'` fuer `tester1`
+- `INDEX2 = '0801'` fuer `tester2`
+
+Fuer den ersten lokalen Test ist `maxReplicaCount` bewusst auf `1` begrenzt, damit nur der interessante Fall `0` oder `1` Worker beobachtet wird.
+Die Aktivierungsschwelle ist auf `0` gesetzt, damit bereits ein einzelner passender Datensatz den Worker startet.
+
+Fuer KEDA wird die PostgreSQL-Verbindung lokal separat ueber `host`, `port`, `dbName`, `userName`, `sslmode=disable` und eine `TriggerAuthentication` aus Secret gesetzt, weil der komplette Npgsql-Connection-String des Workers vom KEDA-Scaler nicht zuverlaessig ausgewertet wurde.
+
+Zum Testen:
+
+- KEDA im Cluster installieren
+- Deployment mit `--set worker.keda.enabled=true --set worker.replicaCount=0` neu ausrollen
+
+Pruefen:
+
+```powershell
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get scaledobject -n default
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get hpa -n default
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster describe scaledobject tester1-app-a-worker -n default
 ```
 
 ## 9. Weitere Tester im selben vCluster anlegen
