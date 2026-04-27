@@ -69,6 +69,7 @@ helm upgrade --install tester2 .\helm\app-a `
 - `tester1` sieht dadurch `D:\Testumgebung\ZVD\tester1` im Container als `/configdata`.
 - `tester2` sieht dadurch `D:\Testumgebung\ZVD\tester2` im Container als `/configdata`.
 - Die Steuerung der fachlichen Umgebung erfolgt zusaetzlich pro Release ueber `ServiceConfiguration__InstallationEnvironment` mit `tester1` bzw. `tester2`.
+- Der `vcluster` nutzt den `metrics-server` des Host-Clusters ueber die `metricsServer`-Integration.
 - Nach Aenderungen an `local/kind/cluster-config.yaml` muss der `kind`-Cluster neu erstellt werden, weil `extraMounts` nicht nachtraeglich uebernommen werden.
 
 ## Wichtige Pruefbefehle
@@ -79,6 +80,8 @@ helm list -A
 kubectl --context kind-host-cluster get ingress -A
 kubectl top nodes --context kind-host-cluster
 kubectl top pods -n vcluster-app-a --context kind-host-cluster
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster top pods -n default
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster top nodes
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster get secret app-a-worker-db -n default
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester1-app-a-worker -n default --tail=50
 kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster logs deploy/tester2-app-a-worker -n default --tail=50

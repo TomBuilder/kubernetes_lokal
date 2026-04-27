@@ -73,6 +73,8 @@ kind load docker-image conregipsentw.azurecr.io/zvd-priorisierung:2.0.0.25447 --
 vcluster create app-a --namespace vcluster-app-a --connect=false -f .\local\vcluster\vcluster-values.yaml
 ```
 
+Die `vcluster`-Konfiguration bindet dabei zusaetzlich den vorhandenen `metrics-server` aus dem Host-Cluster ein.
+
 ## 6. Mit dem vCluster verbinden
 
 ```powershell
@@ -133,6 +135,13 @@ Host-Metriken pruefen:
 ```powershell
 kubectl top nodes --context kind-host-cluster
 kubectl top pods -n vcluster-app-a --context kind-host-cluster
+```
+
+Wenn die `metricsServer`-Integration im `vcluster` aktiv ist, sollte zusaetzlich auch das funktionieren:
+
+```powershell
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster top pods -n default
+kubectl --context vcluster_app-a_vcluster-app-a_kind-host-cluster top nodes
 ```
 
 Zum Debuggen ist es oft hilfreich, den synchronisierten Ingress im Host-Cluster explizit anzusehen:
@@ -225,3 +234,4 @@ helm list -n default --kube-context vcluster_app-a_vcluster-app-a_kind-host-clus
 - Die Port-Mappings `8080` und `8443` aus `kind` werden auf die NodePorts `30080` und `30443` des Ingress Controllers geleitet.
 - Beispiel-Overlays fuer weitere Tester liegen in `local/sample-values/`.
 - Der Worker nutzt lokal `hostPath` fuer `/configdata`; der Web-Teil verwendet weiterhin PVC.
+- Fuer `kubectl top` im `vcluster` wird der `metrics-server` des Host-Clusters wiederverwendet.

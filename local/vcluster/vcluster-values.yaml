@@ -1,4 +1,4 @@
-﻿sync:
+sync:
   toHost:
     ingresses:
       enabled: true
@@ -9,6 +9,17 @@
   fromHost:
     nodes:
       enabled: true
+
+integrations:
+  metricsServer:
+    enabled: true
+    nodes: true
+    pods: true
+    apiService:
+      service:
+        name: metrics-server
+        namespace: kube-system
+        port: 443
 
 exportKubeConfig:
   context: vcluster-app-a
