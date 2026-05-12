@@ -2,3 +2,6 @@
 .terraform/
 *.tfstate
 *.tfstate.backup
+kubeconfig.yaml
+**/obj/
+**/.artifacts/
